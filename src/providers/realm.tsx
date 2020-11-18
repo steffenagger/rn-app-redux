@@ -1,19 +1,19 @@
 import {ObjectId} from 'bson';
 import React, {useContext} from 'react';
 import Realm from 'realm';
-import Item from '../models/item';
+import RealmItem from '../models/realm-item';
 
 // note: kept to a simple local instance, as difficulties should be visible.
 
 const TEST_ITEM_AMOUNT = 200;
 
-const realm = new Realm({schema: [Item]});
+export const realm = new Realm({schema: [RealmItem]});
 
-// todo: move...
-if (realm.objects(Item).length < 1) {
+// todo: (re)move...
+if (realm.objects(RealmItem).length < 1) {
   realm.write(() => {
     for (let i = 1; i <= TEST_ITEM_AMOUNT; i++) {
-      realm.create(Item, {
+      realm.create(RealmItem, {
         _id: new ObjectId(),
         itemNo: i,
       });
@@ -29,6 +29,7 @@ const RealmProvider: React.FC = ({children}) => {
   );
 };
 
+// Expose hook
 const useRealm = () => {
   const instance = useContext(RealmContext);
   if (instance == null) {
