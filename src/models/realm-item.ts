@@ -22,8 +22,3 @@ export default class RealmItem extends Realm.Object {
     },
   };
 }
-
-export const toFlatStructure = (item: RealmItem): RealmItemPlain => ({
-  ...item.toJSON(),
-  _id: item._id.toHexString(), // if left as ObjectId, the app crashes... I did not have time to investigate.
-});

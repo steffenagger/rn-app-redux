@@ -1,80 +1,66 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {FlatList} from 'react-native';
 import {Dispatch} from 'redux';
 import {connect} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ListItem} from '../components/list-item';
-import RealmItem, {RealmItemPlain, toFlatStructure} from '../models/realm-item';
+import RealmItem, {RealmItemPlain} from '../models/realm-item';
 import {GlobalState} from '../store';
 import * as actions from '../store/actions';
-import {useRealm} from '../providers/realm';
+import {realm} from '../providers/realm';
 import {NavigationStackParamList} from '../../App';
 import {EntityChangeset} from '../types';
 import {SafeContainer} from '../components/styled';
+import {RealmListComponent, RealmListState} from '../components/realm-list';
 
 type StateProps = ReturnType<typeof mapStateToProps>;
 type DispatchProps = ReturnType<typeof mapDispatchToProps>;
 type NavigationProps = StackScreenProps<NavigationStackParamList, 'List'>;
 type Props = StateProps & DispatchProps & NavigationProps;
+type State = {};
+class ListScreen extends RealmListComponent<
+  RealmItem,
+  RealmItemPlain,
+  Props,
+  State
+> {
+  state: RealmListState<RealmItemPlain> = {};
+  realmCollection(): Realm.Collection<RealmItem> {
+    return realm.objects(RealmItem).sorted('itemNo');
+  }
+  realmObjectMapper = (item: RealmItem): RealmItemPlain => ({
+    ...item.toJSON(),
+    _id: item._id.toHexString(), // if left as ObjectId, the app crashes... I did not have time to investigate.
+  });
 
-const ListScreen: React.FC<Props> = ({
-  items,
-  setItems,
-  applyChangeset,
-  navigation,
-}) => {
-  const realm = useRealm();
-  useEffect(() => {
-    console.log('Running ListScreen -> useEffect');
-    const itemsCollection = realm.objects(RealmItem).sorted('itemNo');
-    const data = itemsCollection.map((x) => toFlatStructure(x));
-    setItems(data);
+  constructor(props: Props) {
+    super(props);
+  }
 
-    itemsCollection.addListener((collection, changes) => {
-      try {
-        const inserts = changes.insertions.map((i) => ({
-          index: i,
-          value: toFlatStructure(collection[i]),
-        }));
-        const updates = changes.oldModifications.map((i) => ({
-          index: i,
-          value: toFlatStructure(collection[i]),
-        }));
-        const deletions = [...changes.deletions];
-
-        // check if noop (initial trigger)
-        if (inserts.length || updates.length || deletions.length) {
-          const changeset: EntityChangeset = {
-            inserts,
-            updates,
-            deletions: changes.deletions,
-          };
-
-          applyChangeset(changeset);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    // todo: removeListener
-  }, [realm, setItems, applyChangeset]);
-
-  const renderItem = ({item}: {item: RealmItemPlain}) => (
-    <ListItem item={item} onPress={() => navigation.push('EditItem', {item})} />
+  renderItem = ({item}: {item: RealmItemPlain}) => (
+    <ListItem
+      item={item}
+      onPress={() => this.props.navigation.push('EditItem', {item})}
+    />
   );
-  const keyExtractor = (item: RealmItemPlain) => `realm-item-${item._id}`;
+  keyExtractor = (item: RealmItemPlain) => `realm-item-${item._id}`;
 
-  return (
-    <SafeContainer>
-      <FlatList
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-      />
-    </SafeContainer>
-  );
-};
+  render() {
+    if (!this.state.realmItems) {
+      return null;
+    }
+
+    return (
+      <SafeContainer>
+        <FlatList
+          data={this.state.realmItems}
+          renderItem={this.renderItem}
+          keyExtractor={this.keyExtractor}
+        />
+      </SafeContainer>
+    );
+  }
+}
 
 const mapStateToProps = (state: GlobalState) => ({
   items: state.items.items,
