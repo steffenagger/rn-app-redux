@@ -17,13 +17,8 @@ type StateProps = ReturnType<typeof mapStateToProps>;
 type DispatchProps = ReturnType<typeof mapDispatchToProps>;
 type NavigationProps = StackScreenProps<NavigationStackParamList, 'List'>;
 type Props = StateProps & DispatchProps & NavigationProps;
-type State = {};
-class ListScreen extends RealmListComponent<
-  RealmItem,
-  RealmItemPlain,
-  Props,
-  State
-> {
+
+class ListScreen extends RealmListComponent<RealmItem, RealmItemPlain, Props> {
   state: RealmListState<RealmItemPlain> = {};
   realmCollection(): Realm.Collection<RealmItem> {
     return realm.objects(RealmItem).sorted('itemNo');
