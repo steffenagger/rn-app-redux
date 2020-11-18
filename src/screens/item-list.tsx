@@ -1,24 +1,21 @@
 import React from 'react';
 import {FlatList} from 'react-native';
-import {Dispatch} from 'redux';
-import {connect} from 'react-redux';
 import {StackScreenProps} from '@react-navigation/stack';
 import {ListItem} from '../components/list-item';
 import RealmItem, {RealmItemPlain} from '../models/realm-item';
-import {GlobalState} from '../store';
-import * as actions from '../store/actions';
 import {realm} from '../providers/realm';
 import {NavigationStackParamList} from '../../App';
-import {EntityChangeset} from '../types';
 import {SafeContainer} from '../components/styled';
 import {RealmListComponent, RealmListState} from '../components/realm-list';
 
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = ReturnType<typeof mapDispatchToProps>;
 type NavigationProps = StackScreenProps<NavigationStackParamList, 'List'>;
-type Props = StateProps & DispatchProps & NavigationProps;
+type Props = NavigationProps;
 
-class ListScreen extends RealmListComponent<RealmItem, RealmItemPlain, Props> {
+export default class ListScreen extends RealmListComponent<
+  RealmItem,
+  RealmItemPlain,
+  Props
+> {
   state: RealmListState<RealmItemPlain> = {};
   realmCollection(): Realm.Collection<RealmItem> {
     return realm.objects(RealmItem).sorted('itemNo');
@@ -56,15 +53,3 @@ class ListScreen extends RealmListComponent<RealmItem, RealmItemPlain, Props> {
     );
   }
 }
-
-const mapStateToProps = (state: GlobalState) => ({
-  items: state.items.items,
-});
-
-const mapDispatchToProps = (dispatch: Dispatch, _: StateProps) => ({
-  setItems: (items: RealmItemPlain[]) => dispatch(actions.setItems(items)),
-  applyChangeset: (changeset: EntityChangeset<RealmItemPlain>) =>
-    dispatch(actions.applyChangeset(changeset)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ListScreen);
